@@ -1,12 +1,11 @@
 import decimal
 import typing as t
 
-
 # String must be in "{currency_code} {amount}" format (e.g. "PHP 1234.50").
-IntoMoneyPayload: t.TypeAlias = "str | tuple[str, decimal.Decimal] | MoneyLike"
+MoneyLike: t.TypeAlias = "str | tuple[str, decimal.Decimal] | MoneyProtocol"
 
 
-class MoneyLike(t.Protocol):
+class MoneyProtocol(t.Protocol):
     @property
     def currency_code(self) -> str: ...
 
@@ -16,7 +15,7 @@ class MoneyLike(t.Protocol):
 
 class MoneyPayload:
     @classmethod
-    def build(cls, money: IntoMoneyPayload) -> str:
+    def build(cls, money: MoneyLike) -> str:
         if isinstance(money, str):
             return money
         elif isinstance(money, tuple):

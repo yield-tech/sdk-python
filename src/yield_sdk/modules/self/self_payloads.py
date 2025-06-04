@@ -29,5 +29,7 @@ class SelfOrganizationInfo:
         return cls(
             id=type_utils.expect_string(payload["id"]),
             registered_name=type_utils.expect_string(payload["registered_name"]),
-            trade_name=type_utils.expect_string(payload["trade_name"]) if payload.get("trade_name") is not None else None,
+            trade_name=type_utils.expect_string(payload["trade_name"])
+            if payload.get("trade_name") is not None
+            else None,
         )

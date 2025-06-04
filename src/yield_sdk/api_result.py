@@ -1,8 +1,7 @@
-from collections.abc import Mapping
 import dataclasses as dc
 import json
 import typing as t
-
+from collections.abc import Mapping
 
 T = t.TypeVar("T")
 
@@ -24,8 +23,15 @@ class APIResult(t.Generic[T]):
         return cls(status_code, request_id, data, None)
 
     @classmethod
-    def failure(cls, status_code: int, request_id: str | None, error_type: str, error_body: Mapping[str, object] | None) -> "APIResult[t.Any]":
-        return cls(status_code, request_id, None, APIErrorDetails(error_type, error_body))
+    def failure(
+        cls,
+        status_code: int,
+        request_id: str | None,
+        error_type: str,
+        error_body: Mapping[str, object] | None,
+        exception: Exception | None,
+    ) -> "APIResult[t.Any]":
+        return cls(status_code, request_id, None, APIErrorDetails(error_type, error_body, exception))
 
     @property
     def ok(self) -> bool:
@@ -41,8 +47,11 @@ class APIResult(t.Generic[T]):
 
     @property
     def data(self) -> T:
+        if self._error is not None:
+            raise APIError(self._status_code, self._request_id, self._error) from self._error.exception
+
         if self._data is None:
-            raise APIError(self._status_code, self._request_id, self._error) # type: ignore
+            raise Exception("Invalid API result: no error or data")
 
         return self._data
 
@@ -55,6 +64,7 @@ class APIResult(t.Generic[T]):
 class APIErrorDetails:
     type: str
     body: Mapping[str, object] | None
+    exception: Exception | None
 
 
 class APIError(Exception):
@@ -68,14 +78,15 @@ class APIError(Exception):
         self._details = error
 
         error_info = error.type
-        if error_info == "validation_error" and error.body is not None:
+        if error.type == "validation_error" and error.body is not None:
             issues = json.dumps(error.body["issues"], ensure_ascii=False, separators=(",", ":"))
             error_info = f"{error_info} {issues}"
 
-        extra_info = "; ".join(f"{k}={v}" for k, v in [
-            ("status_code", str(status_code)),
-            ("request_id", request_id or "<none>"),
-        ])
+        if error.exception:
+            message = json.dumps(str(error.exception), ensure_ascii=False, separators=(",", ":"))
+            error_info = f"{error_info} {message}"
+
+        extra_info = "; ".join([f"status_code={status_code}", f"request_id={request_id or '<none>'}"])
 
         super().__init__(f"Yield API error: {error_info} [{extra_info}]")
 

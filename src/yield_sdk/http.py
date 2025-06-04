@@ -1,7 +1,7 @@
-from collections.abc import Mapping
 import typing as t
-import typing_extensions as tx
+from collections.abc import Mapping
 
+import typing_extensions as tx
 
 if t.TYPE_CHECKING:
     import httpx
@@ -13,14 +13,12 @@ Response: t.TypeAlias = tuple[int, Mapping[str, str], str]
 
 
 class SyncHTTPClient(t.Protocol):
-    def close(self) -> None:
-        ...
+    def close(self) -> None: ...
 
-    def request(self, method: str, url: str, headers: Mapping[str, str] | None, body: str | None) -> Response:
-        ...
+    def request(self, method: str, url: str, headers: Mapping[str, str] | None, body: str | None) -> Response: ...
 
 
-class Urllib3HTTPClient(SyncHTTPClient):
+class Urllib3SyncHTTPClient(SyncHTTPClient):
     _http: "urllib3.PoolManager"
 
     def __init__(self, pool_manager: "urllib3.PoolManager"):
@@ -28,7 +26,7 @@ class Urllib3HTTPClient(SyncHTTPClient):
 
     @tx.override
     def close(self) -> None:
-        pass # not necessary
+        pass  # not necessary
 
     @tx.override
     def request(self, method: str, url: str, headers: Mapping[str, str] | None, body: str | None) -> Response:
@@ -38,7 +36,7 @@ class Urllib3HTTPClient(SyncHTTPClient):
         return (response.status, response.headers, response.data.decode())
 
 
-class HttpxSyncHTTPClient(SyncHTTPClient):
+class HTTPXSyncHTTPClient(SyncHTTPClient):
     _http: "httpx.Client"
 
     def __init__(self, client: "httpx.Client"):
@@ -56,8 +54,6 @@ class HttpxSyncHTTPClient(SyncHTTPClient):
 
 
 class AsyncHTTPClient(t.Protocol):
-    async def aclose(self) -> None:
-        ...
+    async def aclose(self) -> None: ...
 
-    async def request(self, method: str, url: str, headers: Mapping[str, str] | None, body: str | None) -> Response:
-        ...
+    async def request(self, method: str, url: str, headers: Mapping[str, str] | None, body: str | None) -> Response: ...

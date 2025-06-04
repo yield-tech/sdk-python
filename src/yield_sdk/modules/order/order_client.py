@@ -1,5 +1,8 @@
+import urllib.parse
+
 from yield_sdk.api_client import SyncAPIClient
 from yield_sdk.api_result import APIResult
+
 from . import order_payloads as payloads
 
 
@@ -23,12 +26,13 @@ class SyncOrderBaseClient:
         self._api = api_client
 
     def fetch(self, id: str) -> APIResult[payloads.Order]:
-        response = self._api.run_query(f"/order/fetch/{id}")
+        encoded_id = urllib.parse.quote(id, safe="")
+        response = self._api.run_query(f"/order/fetch/{encoded_id}")
 
         return SyncAPIClient.process_response(response, payloads.Order.from_payload)
 
     def create(self, params: payloads.OrderCreateParams) -> APIResult[payloads.Order]:
         payload = payloads.OrderCreatePayload.build(params)
-        response = self._api.run_command(f"/order/create", payload)
+        response = self._api.run_command("/order/create", payload)
 
         return SyncAPIClient.process_response(response, payloads.Order.from_payload)

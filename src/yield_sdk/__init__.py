@@ -1,3 +1,3 @@
-from .version import __version__
+from .api_result import APIError as APIError
 from .client import SyncClient as SyncClient
-from .http import SyncHTTPClient as SyncHTTPClient
+from .version import __version__ as __version__
